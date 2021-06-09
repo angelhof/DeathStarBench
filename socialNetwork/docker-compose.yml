@@ -1,7 +1,7 @@
 version: "3"
 services:
   config:
-    image: yg397/social-network-microservices:latest
+    build: docker/config-container
     hostname: config
     environment:
       - TLS
