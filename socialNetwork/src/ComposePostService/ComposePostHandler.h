@@ -368,66 +368,66 @@ void ComposePostHandler::ComposePost(
   auto span = opentracing::Tracer::Global()->StartSpan(
       "compose_post_server", {opentracing::ChildOf(parent_span->get())});
   std::map<std::string, std::string> writer_text_map;
-  TextMapWriter writer(writer_text_map);
-  opentracing::Tracer::Global()->Inject(span->context(), writer);
+  // TextMapWriter writer(writer_text_map);
+  // opentracing::Tracer::Global()->Inject(span->context(), writer);
 
-  auto text_future =
-      std::async(std::launch::async, &ComposePostHandler::_ComposeTextHelper,
-                 this, req_id, text, writer_text_map);
-  auto creator_future =
-      std::async(std::launch::async, &ComposePostHandler::_ComposeCreaterHelper,
-                 this, req_id, user_id, username, writer_text_map);
-  auto media_future =
-      std::async(std::launch::async, &ComposePostHandler::_ComposeMediaHelper,
-                 this, req_id, media_types, media_ids, writer_text_map);
-  auto unique_id_future = std::async(
-      std::launch::async, &ComposePostHandler::_ComposeUniqueIdHelper, this,
-      req_id, post_type, writer_text_map);
+  // auto text_future =
+  //     std::async(std::launch::async, &ComposePostHandler::_ComposeTextHelper,
+  //                this, req_id, text, writer_text_map);
+  // auto creator_future =
+  //     std::async(std::launch::async, &ComposePostHandler::_ComposeCreaterHelper,
+  //                this, req_id, user_id, username, writer_text_map);
+  // auto media_future =
+  //     std::async(std::launch::async, &ComposePostHandler::_ComposeMediaHelper,
+  //                this, req_id, media_types, media_ids, writer_text_map);
+  // auto unique_id_future = std::async(
+  //     std::launch::async, &ComposePostHandler::_ComposeUniqueIdHelper, this,
+  //     req_id, post_type, writer_text_map);
 
-  Post post;
-  auto timestamp =
-      duration_cast<milliseconds>(system_clock::now().time_since_epoch())
-          .count();
-  post.timestamp = timestamp;
+  // Post post;
+  // auto timestamp =
+  //     duration_cast<milliseconds>(system_clock::now().time_since_epoch())
+  //         .count();
+  // post.timestamp = timestamp;
 
-  // try
-  // {
-  post.post_id = unique_id_future.get();
-  post.creator = creator_future.get();
-  post.media = media_future.get();
-  auto text_return = text_future.get();
-  post.text = text_return.text;
-  post.urls = text_return.urls;
-  post.user_mentions = text_return.user_mentions;
-  post.req_id = req_id;
-  post.post_type = post_type;
+  // // try
+  // // {
+  // post.post_id = unique_id_future.get();
+  // post.creator = creator_future.get();
+  // post.media = media_future.get();
+  // auto text_return = text_future.get();
+  // post.text = text_return.text;
+  // post.urls = text_return.urls;
+  // post.user_mentions = text_return.user_mentions;
+  // post.req_id = req_id;
+  // post.post_type = post_type;
+  // // }
+  // // catch (...)
+  // // {
+  // //   throw;
+  // // }
+
+  // std::vector<int64_t> user_mention_ids;
+  // for (auto &item : post.user_mentions) {
+  //   user_mention_ids.emplace_back(item.user_id);
   // }
-  // catch (...)
-  // {
-  //   throw;
-  // }
 
-  std::vector<int64_t> user_mention_ids;
-  for (auto &item : post.user_mentions) {
-    user_mention_ids.emplace_back(item.user_id);
-  }
+  // auto post_future =
+  //     std::async(std::launch::async, &ComposePostHandler::_UploadPostHelper,
+  //                this, req_id, post, writer_text_map);
+  // auto user_timeline_future = std::async(
+  //     std::launch::async, &ComposePostHandler::_UploadUserTimelineHelper, this,
+  //     req_id, post.post_id, user_id, timestamp, writer_text_map);
+  // auto home_timeline_future = std::async(
+  //     std::launch::async, &ComposePostHandler::_UploadHomeTimelineHelper, this,
+  //     req_id, post.post_id, user_id, timestamp, user_mention_ids,
+  //     writer_text_map);
 
-  auto post_future =
-      std::async(std::launch::async, &ComposePostHandler::_UploadPostHelper,
-                 this, req_id, post, writer_text_map);
-  auto user_timeline_future = std::async(
-      std::launch::async, &ComposePostHandler::_UploadUserTimelineHelper, this,
-      req_id, post.post_id, user_id, timestamp, writer_text_map);
-  auto home_timeline_future = std::async(
-      std::launch::async, &ComposePostHandler::_UploadHomeTimelineHelper, this,
-      req_id, post.post_id, user_id, timestamp, user_mention_ids,
-      writer_text_map);
-
-  // try
-  // {
-  post_future.get();
-  user_timeline_future.get();
-  home_timeline_future.get();
+  // // try
+  // // {
+  // post_future.get();
+  // user_timeline_future.get();
+  // home_timeline_future.get();
   // }
   // catch (...)
   // {
