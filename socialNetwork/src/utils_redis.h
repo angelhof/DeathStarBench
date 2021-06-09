@@ -16,10 +16,14 @@ Redis init_redis_client_pool(
   connection_options.port = config_json[service_name + "-redis"]["port"];
 
   if (config_json["ssl"]["enabled"]) {
-    std::string ca_file = config_json["ssl"]["caPath"];
+    // KK: 09-06-2021 I replaced the below with an error because compilation failed otherwise 
+    //                and TLS doesn't seem to be used.
+    LOG(fatal) << "Error: Should not have been configured with ssl" << std::endl;
+    exit(1);
+    // std::string ca_file = config_json["ssl"]["caPath"];
 
-    connection_options.tls.enabled = true;
-    connection_options.tls.cacert = ca_file.c_str();
+    // connection_options.tls.enabled = true;
+    // connection_options.tls.cacert = ca_file.c_str();
   }
 
   ConnectionPoolOptions pool_options;

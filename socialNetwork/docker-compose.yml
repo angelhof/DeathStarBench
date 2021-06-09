@@ -71,7 +71,8 @@ services:
       - ./keys:/keys
 
   compose-post-service:
-    image: yg397/social-network-microservices:latest
+    # image: yg397/social-network-microservices:latest
+    build: .
     hostname: compose-post-service
     #    ports:
     #      - 10001:9090
