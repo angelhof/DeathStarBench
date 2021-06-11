@@ -71,8 +71,12 @@ services:
       - ./keys:/keys
 
   compose-post-service:
+    ## For the original C++ version
     # image: yg397/social-network-microservices:latest
+    # entrypoint: ComposePostService
+    ## For the Python version
     build: .
+    entrypoint: ["python3", "src/ComposePostService/MyComposePostService.py"]
     hostname: compose-post-service
     #    ports:
     #      - 10001:9090
@@ -82,8 +86,6 @@ services:
         condition: service_completed_successfully
       jaeger:
         condition: service_started
-    # entrypoint: ComposePostService
-    entrypoint: ["python3", "src/ComposePostService/MyComposePostService.py"]
     volumes:
       - ./config:/social-network-microservices/config
       - ./keys:/keys
