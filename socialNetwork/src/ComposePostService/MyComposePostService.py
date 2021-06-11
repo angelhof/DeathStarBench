@@ -32,6 +32,10 @@ def set_up_tracer(config_file_path, service):
                 # 'queueSize': 1000000,
                 # 'bufferFlushInterval': 10              
             # },
+            'local_agent': {
+                'reporting_host': 'jaeger-agent',
+                'reporting_port': '6831',
+            },
             'reporter_queue_size': 1000000,
             'reporter_flush_interval': 10,
             'sampler': {
