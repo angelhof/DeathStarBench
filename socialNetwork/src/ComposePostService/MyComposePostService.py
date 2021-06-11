@@ -51,14 +51,18 @@ class ComposePostHandler:
     ## TODO: Regenerate the thrift files so that carrier is there
     def ComposePost(self, req_id, username, user_id,    
                     text, media_ids, media_types, post_type):
-        tracer = self.tracer
-        with tracer.start_span('TestSpan') as span:
-            span.log_kv({'event': 'test message', 'life': 42})
+        log("Received request:", req_id, "from:", user_id)
+        # tracer = self.tracer
+        # with tracer.start_span('TestSpan') as span:
+        #     span.log_kv({'event': 'test message', 'life': 42})
 
-            with tracer.start_span('ChildSpan', child_of=span) as child_span:
-                child_span.log_kv({'event': 'down below'})
-        tracer.close()
+        #     with tracer.start_span('ChildSpan', child_of=span) as child_span:
+        #         child_span.log_kv({'event': 'down below'})
+        # tracer.close()
         return
+
+
+## TODO: Before making the tracer work we can do with logging, no problem.
 
 
 if __name__ == '__main__':
@@ -67,7 +71,8 @@ if __name__ == '__main__':
     
     ## Setup Tracer
     ## TODO: Properly set up tracer to find the parent span yada yada
-    tracer = set_up_tracer("TODO", 'compose-post-service')
+    # tracer = set_up_tracer("TODO", 'compose-post-service')
+    tracer = None
 
     ## TODO: Load the config file
     port = 9090
