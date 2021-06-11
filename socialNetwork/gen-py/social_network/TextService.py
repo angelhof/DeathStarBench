@@ -163,11 +163,11 @@ class ComposeText_args(object):
             elif fid == 3:
                 if ftype == TType.MAP:
                     self.carrier = {}
-                    (_ktype31, _vtype32, _size30) = iprot.readMapBegin()
-                    for _i34 in range(_size30):
-                        _key35 = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
-                        _val36 = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
-                        self.carrier[_key35] = _val36
+                    (_ktype45, _vtype46, _size44) = iprot.readMapBegin()
+                    for _i48 in range(_size44):
+                        _key49 = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
+                        _val50 = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
+                        self.carrier[_key49] = _val50
                     iprot.readMapEnd()
                 else:
                     iprot.skip(ftype)
@@ -192,9 +192,9 @@ class ComposeText_args(object):
         if self.carrier is not None:
             oprot.writeFieldBegin('carrier', TType.MAP, 3)
             oprot.writeMapBegin(TType.STRING, TType.STRING, len(self.carrier))
-            for kiter37, viter38 in self.carrier.items():
-                oprot.writeString(kiter37.encode('utf-8') if sys.version_info[0] == 2 else kiter37)
-                oprot.writeString(viter38.encode('utf-8') if sys.version_info[0] == 2 else viter38)
+            for kiter51, viter52 in self.carrier.items():
+                oprot.writeString(kiter51.encode('utf-8') if sys.version_info[0] == 2 else kiter51)
+                oprot.writeString(viter52.encode('utf-8') if sys.version_info[0] == 2 else viter52)
             oprot.writeMapEnd()
             oprot.writeFieldEnd()
         oprot.writeFieldStop()
@@ -245,8 +245,9 @@ class ComposeText_result(object):
             if ftype == TType.STOP:
                 break
             if fid == 0:
-                if ftype == TType.STRING:
-                    self.success = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
+                if ftype == TType.STRUCT:
+                    self.success = TextServiceReturn()
+                    self.success.read(iprot)
                 else:
                     iprot.skip(ftype)
             elif fid == 1:
@@ -266,8 +267,8 @@ class ComposeText_result(object):
             return
         oprot.writeStructBegin('ComposeText_result')
         if self.success is not None:
-            oprot.writeFieldBegin('success', TType.STRING, 0)
-            oprot.writeString(self.success.encode('utf-8') if sys.version_info[0] == 2 else self.success)
+            oprot.writeFieldBegin('success', TType.STRUCT, 0)
+            self.success.write(oprot)
             oprot.writeFieldEnd()
         if self.se is not None:
             oprot.writeFieldBegin('se', TType.STRUCT, 1)
@@ -291,7 +292,7 @@ class ComposeText_result(object):
         return not (self == other)
 all_structs.append(ComposeText_result)
 ComposeText_result.thrift_spec = (
-    (0, TType.STRING, 'success', 'UTF8', None, ),  # 0
+    (0, TType.STRUCT, 'success', [TextServiceReturn, None], None, ),  # 0
     (1, TType.STRUCT, 'se', [ServiceException, None], None, ),  # 1
 )
 fix_spec(all_structs)

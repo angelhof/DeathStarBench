@@ -163,11 +163,11 @@ class ComposeUniqueId_args(object):
             elif fid == 3:
                 if ftype == TType.MAP:
                     self.carrier = {}
-                    (_ktype22, _vtype23, _size21) = iprot.readMapBegin()
-                    for _i25 in range(_size21):
-                        _key26 = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
-                        _val27 = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
-                        self.carrier[_key26] = _val27
+                    (_ktype36, _vtype37, _size35) = iprot.readMapBegin()
+                    for _i39 in range(_size35):
+                        _key40 = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
+                        _val41 = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
+                        self.carrier[_key40] = _val41
                     iprot.readMapEnd()
                 else:
                     iprot.skip(ftype)
@@ -192,9 +192,9 @@ class ComposeUniqueId_args(object):
         if self.carrier is not None:
             oprot.writeFieldBegin('carrier', TType.MAP, 3)
             oprot.writeMapBegin(TType.STRING, TType.STRING, len(self.carrier))
-            for kiter28, viter29 in self.carrier.items():
-                oprot.writeString(kiter28.encode('utf-8') if sys.version_info[0] == 2 else kiter28)
-                oprot.writeString(viter29.encode('utf-8') if sys.version_info[0] == 2 else viter29)
+            for kiter42, viter43 in self.carrier.items():
+                oprot.writeString(kiter42.encode('utf-8') if sys.version_info[0] == 2 else kiter42)
+                oprot.writeString(viter43.encode('utf-8') if sys.version_info[0] == 2 else viter43)
             oprot.writeMapEnd()
             oprot.writeFieldEnd()
         oprot.writeFieldStop()

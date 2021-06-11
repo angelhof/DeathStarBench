@@ -158,21 +158,21 @@ class ComposeUserMentions_args(object):
             elif fid == 2:
                 if ftype == TType.LIST:
                     self.usernames = []
-                    (_etype269, _size266) = iprot.readListBegin()
-                    for _i270 in range(_size266):
-                        _elem271 = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
-                        self.usernames.append(_elem271)
+                    (_etype308, _size305) = iprot.readListBegin()
+                    for _i309 in range(_size305):
+                        _elem310 = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
+                        self.usernames.append(_elem310)
                     iprot.readListEnd()
                 else:
                     iprot.skip(ftype)
             elif fid == 3:
                 if ftype == TType.MAP:
                     self.carrier = {}
-                    (_ktype273, _vtype274, _size272) = iprot.readMapBegin()
-                    for _i276 in range(_size272):
-                        _key277 = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
-                        _val278 = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
-                        self.carrier[_key277] = _val278
+                    (_ktype312, _vtype313, _size311) = iprot.readMapBegin()
+                    for _i315 in range(_size311):
+                        _key316 = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
+                        _val317 = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
+                        self.carrier[_key316] = _val317
                     iprot.readMapEnd()
                 else:
                     iprot.skip(ftype)
@@ -193,16 +193,16 @@ class ComposeUserMentions_args(object):
         if self.usernames is not None:
             oprot.writeFieldBegin('usernames', TType.LIST, 2)
             oprot.writeListBegin(TType.STRING, len(self.usernames))
-            for iter279 in self.usernames:
-                oprot.writeString(iter279.encode('utf-8') if sys.version_info[0] == 2 else iter279)
+            for iter318 in self.usernames:
+                oprot.writeString(iter318.encode('utf-8') if sys.version_info[0] == 2 else iter318)
             oprot.writeListEnd()
             oprot.writeFieldEnd()
         if self.carrier is not None:
             oprot.writeFieldBegin('carrier', TType.MAP, 3)
             oprot.writeMapBegin(TType.STRING, TType.STRING, len(self.carrier))
-            for kiter280, viter281 in self.carrier.items():
-                oprot.writeString(kiter280.encode('utf-8') if sys.version_info[0] == 2 else kiter280)
-                oprot.writeString(viter281.encode('utf-8') if sys.version_info[0] == 2 else viter281)
+            for kiter319, viter320 in self.carrier.items():
+                oprot.writeString(kiter319.encode('utf-8') if sys.version_info[0] == 2 else kiter319)
+                oprot.writeString(viter320.encode('utf-8') if sys.version_info[0] == 2 else viter320)
             oprot.writeMapEnd()
             oprot.writeFieldEnd()
         oprot.writeFieldStop()
@@ -255,11 +255,11 @@ class ComposeUserMentions_result(object):
             if fid == 0:
                 if ftype == TType.LIST:
                     self.success = []
-                    (_etype285, _size282) = iprot.readListBegin()
-                    for _i286 in range(_size282):
-                        _elem287 = UserMention()
-                        _elem287.read(iprot)
-                        self.success.append(_elem287)
+                    (_etype324, _size321) = iprot.readListBegin()
+                    for _i325 in range(_size321):
+                        _elem326 = UserMention()
+                        _elem326.read(iprot)
+                        self.success.append(_elem326)
                     iprot.readListEnd()
                 else:
                     iprot.skip(ftype)
@@ -282,8 +282,8 @@ class ComposeUserMentions_result(object):
         if self.success is not None:
             oprot.writeFieldBegin('success', TType.LIST, 0)
             oprot.writeListBegin(TType.STRUCT, len(self.success))
-            for iter288 in self.success:
-                iter288.write(oprot)
+            for iter327 in self.success:
+                iter327.write(oprot)
             oprot.writeListEnd()
             oprot.writeFieldEnd()
         if self.se is not None:
