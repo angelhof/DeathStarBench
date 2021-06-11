@@ -50,10 +50,9 @@ def set_up_tracer(config_file_path, service):
         validate=True
     )
     try:
-        tracer = config.initialize_tracer()
-        # return tracer
-        ## TODO: Check if this is indeed done by the jaeger library
+        ## Initialize the tracer and set the global opentracing tracer
         # opentracing.set_global_tracer(tracer)
+        config.initialize_tracer()
     except:
         log("WTF")
         exit(1)
@@ -68,20 +67,17 @@ class ComposePostHandler:
         log("Received request:", req_id, "from:", user_id)
         log("Carrier:", carrier)
         tracer = opentracing.global_tracer()
-        log("Tracer:", tracer)
+        # log("Tracer:", tracer)
         ## Get the parent span
         parent_span_context = tracer.extract(format=Format.TEXT_MAP,
                                              carrier=carrier)
-        log("ParentContext:", parent_span_context)
+        # log("ParentContext:", parent_span_context)
         with tracer.start_span(operation_name='compose_post_server', 
-                               child_of=parent_span_context
-                            #    references=[opentracing.child_of(parent_span_context)]
-                               ) as span:
+                               child_of=parent_span_context) as span:
+            ## TODO: Remove. This is just here for debugging.
             span.log_kv({'event': 'test message', 'life': 42})
 
-            # with tracer.start_span('ChildSpan', child_of=span) as child_span:
-            #     child_span.log_kv({'event': 'down below'})
-        # tracer.close()
+            ## TODO: Make a call to another service properly.
         return
 
 
@@ -93,7 +89,6 @@ if __name__ == '__main__':
     ## TODO: Logger (probably not necessary)
     
     ## Setup Tracer
-    ## TODO: Properly set up tracer to find the parent span yada yada
     set_up_tracer("TODO", 'compose-post-service')
 
     ## TODO: Load the config file
