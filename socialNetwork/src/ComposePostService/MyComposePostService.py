@@ -6,7 +6,7 @@ sys.path.append('gen-py')
 
 from concurrent.futures import ThreadPoolExecutor
 
-from social_network import ComposePostService, TextService
+from social_network import ComposePostService, TextService, UserService
 # from ComposePostService import *
 
 from thrift.transport import TSocket
@@ -60,9 +60,12 @@ def set_up_tracer(config_file_path, service):
         exit(1)
 
 class ComposePostHandler:
-    def __init__(self, text_service_client):
+    def __init__(self, 
+                 text_service_client,
+                 user_service_client):
         self.log = {}
         self.text_service_client = text_service_client
+        self.user_service_client = user_service_client
 
     ## TODO: Regenerate the thrift files so that carrier is there
     def ComposePost(self, req_id, username, user_id,    
@@ -97,10 +100,18 @@ class ComposePostHandler:
             with ThreadPoolExecutor(max_workers=2) as executor:
                 ## Call the ComposeTextHelper
                 text_result_future = executor.submit(self._ComposeTextHelper, req_id, text, writer_text_map)
+
+                ## Call the creator id service
+                creator_future = executor.submit(self._ComposeCreaterHelper, req_id, user_id, username, carrier)
+
                 text = text_result_future.result()
                 ## Old invocation without futures
                 # text = self._ComposeTextHelper(req_id, text, writer_text_map)
                 # log("Text returned:", text)
+
+                creator = creator_future.result()
+                # log("Creator returned:", creator)
+
 
         return
 
@@ -129,6 +140,30 @@ class ComposePostHandler:
 
         return return_text
 
+    def _ComposeCreaterHelper(self, req_id, user_id, username, carrier):
+        tracer = opentracing.global_tracer()
+
+        ## Create a new span here.
+        parent_span_context = tracer.extract(format=Format.TEXT_MAP,
+                                             carrier=carrier)
+        
+        with tracer.start_span(operation_name='compose_creator_client', 
+                               child_of=parent_span_context) as span:
+
+            writer_text_map = {}
+            tracer.inject(
+                span_context=span.context,
+                format=Format.TEXT_MAP,
+                carrier=writer_text_map
+            )
+
+            ## TODO: Do we maybe need to connect to the transport here?
+
+            ## TODO: What kind of errors to we need to catch here?
+            client = self.user_service_client
+            return_creator = client.ComposeCreatorWithUserId(req_id, user_id, username, writer_text_map)
+
+        return return_creator
 
 
 
@@ -136,6 +171,7 @@ class ComposePostHandler:
 ## TODO: Before making the tracer work we can do with logging, no problem.
 
 
+## TODO: Refactor both this and the helper
 def TextServiceClient():
     ## TODO: Get those from the config file
     text_service_port = 9090
@@ -159,6 +195,29 @@ def TextServiceClient():
 
     return client
 
+def UserServiceClient():
+    ## TODO: Get those from the config file
+    user_service_port = 9090
+    user_service_addr = "user-service"
+    ## Setup the socket
+    transport = TSocket.TSocket(host=user_service_addr,
+                                port=user_service_port)
+    ## Configure the transport layer to correspond to the expected transport
+    transport = TTransport.TFramedTransport(transport)
+
+    ## Configure the protocol to be binary as expected from the service
+    protocol = TBinaryProtocol.TBinaryProtocol(transport)
+
+    ## Create the client
+    client = UserService.Client(protocol)
+
+    ## Connect to the client
+    ## TODO: Understand what this does
+    ## TODO: Where do we need to catch errors?
+    transport.open()
+
+    return client
+
 if __name__ == '__main__':
     ## TODO: Sigint handler
     ## TODO: Logger (probably not necessary)
@@ -169,9 +228,12 @@ if __name__ == '__main__':
     ## TODO: Load the config file
     service_port = 9090
 
+    ## Set up clients
     text_service_client = TextServiceClient()
+    user_service_client = UserServiceClient()
 
-    handler = ComposePostHandler(text_service_client)
+    handler = ComposePostHandler(text_service_client,
+                                 user_service_client)
     processor = ComposePostService.Processor(handler)
     transport = TSocket.TServerSocket(host='0.0.0.0', port=service_port)
     tfactory = TTransport.TFramedTransportFactory()
