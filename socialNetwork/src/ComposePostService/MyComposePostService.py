@@ -4,6 +4,8 @@ sys.path.append('gen-py')
 # print("hi", glob.glob('../../thrift-0.14.1/lib/py/build/lib*'))
 # sys.path.insert(0, glob.glob('../../thrift-0.14.1/lib/py/build/lib*')[0])
 
+from concurrent.futures import ThreadPoolExecutor
+
 from social_network import ComposePostService, TextService
 # from ComposePostService import *
 
@@ -89,8 +91,17 @@ class ComposePostHandler:
                 carrier=writer_text_map
             )
 
-            ## TODO: Make a call to another service properly.
-            self._ComposeTextHelper(req_id, text, writer_text_map)
+            ## Setup the async futures executor
+            ## TODO: Read that from some config file
+            max_workers = 2
+            with ThreadPoolExecutor(max_workers=2) as executor:
+                ## Call the ComposeTextHelper
+                text_result_future = executor.submit(self._ComposeTextHelper, req_id, text, writer_text_map)
+                text = text_result_future.result()
+                ## Old invocation without futures
+                # text = self._ComposeTextHelper(req_id, text, writer_text_map)
+                # log("Text returned:", text)
+
         return
 
     def _ComposeTextHelper(self, req_id, text, carrier):
