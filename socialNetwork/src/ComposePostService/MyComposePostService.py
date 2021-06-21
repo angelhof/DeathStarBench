@@ -78,29 +78,43 @@ class ComposePostHandler:
             ## This was here just for debugging.
             # span.log_kv({'event': 'test message', 'life': 42})
 
-            ## TODO: I am not sure what I need to do with this
+            ## Inject a new span to the global tracer so that it
+            ## can be extracted and found from the helper functions.
+            ## 
+            ## TODO: Is my understanding correct here?
             writer_text_map = {}
+            tracer.inject(
+                span_context=span.context,
+                format=Format.TEXT_MAP,
+                carrier=writer_text_map
+            )
 
             ## TODO: Make a call to another service properly.
-            self._ComposeTextHelper(req_id, text, span, writer_text_map)
+            self._ComposeTextHelper(req_id, text, writer_text_map)
         return
 
-    def _ComposeTextHelper(self, req_id, text, span, carrier):
-        client = self.text_service_client
+    def _ComposeTextHelper(self, req_id, text, carrier):
+        tracer = opentracing.global_tracer()
 
-        ## TODO: Do correct logging, tracing!
+        ## Create a new span here.
+        parent_span_context = tracer.extract(format=Format.TEXT_MAP,
+                                             carrier=carrier)
+        
+        with tracer.start_span(operation_name='compose_text_client', 
+                               child_of=parent_span_context) as span:
 
-        ## TODO: Create a new span here.
-        opentracing.global_tracer().inject(
-            span_context=span.context,
-            format=Format.TEXT_MAP,
-            carrier=carrier
-        )
+            writer_text_map = {}
+            tracer.inject(
+                span_context=span.context,
+                format=Format.TEXT_MAP,
+                carrier=writer_text_map
+            )
 
-        ## TODO: Do we maybe need to connect to the transport here?
+            ## TODO: Do we maybe need to connect to the transport here?
 
-        ## TODO: What kind of errors to we need to catch here?
-        return_text = client.ComposeText(req_id, text, carrier)
+            ## TODO: What kind of errors to we need to catch here?
+            client = self.text_service_client
+            return_text = client.ComposeText(req_id, text, writer_text_map)
 
         return return_text
 
