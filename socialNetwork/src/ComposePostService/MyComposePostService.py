@@ -158,15 +158,10 @@ class ComposePostHandler:
 
 ## TODO: Before making the tracer work we can do with logging, no problem.
 
-
-## TODO: Refactor both this and the helper
-def TextServiceClient():
-    ## TODO: Get those from the config file
-    text_service_port = 9090
-    text_service_addr = "text-service"
+def SetupClient(service_client_class, service_addr, service_port):
     ## Setup the socket
-    transport = TSocket.TSocket(host=text_service_addr,
-                                port=text_service_port)
+    transport = TSocket.TSocket(host=service_addr,
+                                port=service_port)
     ## Configure the transport layer to correspond to the expected transport
     transport = TTransport.TFramedTransport(transport)
 
@@ -174,30 +169,7 @@ def TextServiceClient():
     protocol = TBinaryProtocol.TBinaryProtocol(transport)
 
     ## Create the client
-    client = TextService.Client(protocol)
-
-    ## Connect to the client
-    ## TODO: Understand what this does
-    ## TODO: Where do we need to catch errors?
-    transport.open()
-
-    return client
-
-def UserServiceClient():
-    ## TODO: Get those from the config file
-    user_service_port = 9090
-    user_service_addr = "user-service"
-    ## Setup the socket
-    transport = TSocket.TSocket(host=user_service_addr,
-                                port=user_service_port)
-    ## Configure the transport layer to correspond to the expected transport
-    transport = TTransport.TFramedTransport(transport)
-
-    ## Configure the protocol to be binary as expected from the service
-    protocol = TBinaryProtocol.TBinaryProtocol(transport)
-
-    ## Create the client
-    client = UserService.Client(protocol)
+    client = service_client_class.Client(protocol)
 
     ## Connect to the client
     ## TODO: Understand what this does
@@ -217,8 +189,11 @@ if __name__ == '__main__':
     service_port = 9090
 
     ## Set up clients
-    text_service_client = TextServiceClient()
-    user_service_client = UserServiceClient()
+    ## TODO: Get address and port from config file
+    # text_service_client = TextServiceClient()
+    # user_service_client = UserServiceClient()
+    text_service_client = SetupClient(TextService, "text-service", 9090)
+    user_service_client = SetupClient(UserService, "user-service", 9090) 
 
     handler = ComposePostHandler(text_service_client,
                                  user_service_client)
