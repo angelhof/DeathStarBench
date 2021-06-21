@@ -99,10 +99,20 @@ class ComposePostHandler:
             max_workers = 2
             with ThreadPoolExecutor(max_workers=2) as executor:
                 ## Call the ComposeTextHelper
-                text_result_future = executor.submit(self._ComposeTextHelper, req_id, text, writer_text_map)
+                text_client_fn = self.text_service_client.ComposeText
+                text_result_future = executor.submit(self.MakeRequestHelper,
+                                                     'compose_text_client',
+                                                     writer_text_map,
+                                                     text_client_fn,
+                                                     req_id, text)
 
                 ## Call the creator id service
-                creator_future = executor.submit(self._ComposeCreaterHelper, req_id, user_id, username, carrier)
+                user_client_fn = self.user_service_client.ComposeCreatorWithUserId
+                creator_future = executor.submit(self.MakeRequestHelper,
+                                                 'compose_creator_client',
+                                                 writer_text_map,
+                                                 user_client_fn,
+                                                 req_id, user_id, username)
 
                 text = text_result_future.result()
                 ## Old invocation without futures
@@ -115,14 +125,15 @@ class ComposePostHandler:
 
         return
 
-    def _ComposeTextHelper(self, req_id, text, carrier):
+    ## A helper that makes requests to downstream services and correctly sets up tracing in the process
+    def MakeRequestHelper(self, tracer_name, carrier, client_fn, *args):
         tracer = opentracing.global_tracer()
 
         ## Create a new span here.
         parent_span_context = tracer.extract(format=Format.TEXT_MAP,
                                              carrier=carrier)
         
-        with tracer.start_span(operation_name='compose_text_client', 
+        with tracer.start_span(operation_name=tracer_name, 
                                child_of=parent_span_context) as span:
 
             writer_text_map = {}
@@ -134,38 +145,15 @@ class ComposePostHandler:
 
             ## TODO: Do we maybe need to connect to the transport here?
 
-            ## TODO: What kind of errors to we need to catch here?
-            client = self.text_service_client
-            return_text = client.ComposeText(req_id, text, writer_text_map)
-
-        return return_text
-
-    def _ComposeCreaterHelper(self, req_id, user_id, username, carrier):
-        tracer = opentracing.global_tracer()
-
-        ## Create a new span here.
-        parent_span_context = tracer.extract(format=Format.TEXT_MAP,
-                                             carrier=carrier)
-        
-        with tracer.start_span(operation_name='compose_creator_client', 
-                               child_of=parent_span_context) as span:
-
-            writer_text_map = {}
-            tracer.inject(
-                span_context=span.context,
-                format=Format.TEXT_MAP,
-                carrier=writer_text_map
-            )
-
-            ## TODO: Do we maybe need to connect to the transport here?
+            ## TODO: We assume that all client calls take the text_map as their final arg
+            args_list = list(args)
+            args_list.append(writer_text_map)
+            new_args = tuple(args_list)
 
             ## TODO: What kind of errors to we need to catch here?
-            client = self.user_service_client
-            return_creator = client.ComposeCreatorWithUserId(req_id, user_id, username, writer_text_map)
+            return_value = client_fn(*new_args)
 
-        return return_creator
-
-
+        return return_value
 
 
 ## TODO: Before making the tracer work we can do with logging, no problem.
