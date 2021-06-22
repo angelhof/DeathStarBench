@@ -5,8 +5,9 @@ sys.path.append('gen-py')
 # sys.path.insert(0, glob.glob('../../thrift-0.14.1/lib/py/build/lib*')[0])
 
 from concurrent.futures import ThreadPoolExecutor
+import time
 
-from social_network import ComposePostService, TextService, UserService
+from social_network import ComposePostService, MediaService, TextService, UniqueIdService, UserService
 # from ComposePostService import *
 
 from thrift.transport import TSocket
@@ -62,10 +63,14 @@ def set_up_tracer(config_file_path, service):
 class ComposePostHandler:
     def __init__(self, 
                  text_service_client,
-                 user_service_client):
+                 user_service_client,
+                 media_service_client,
+                 unique_id_service_client):
         self.log = {}
         self.text_service_client = text_service_client
         self.user_service_client = user_service_client
+        self.media_service_client = media_service_client
+        self.unique_id_service_client = unique_id_service_client
 
     ## TODO: Regenerate the thrift files so that carrier is there
     def ComposePost(self, req_id, username, user_id,    
@@ -87,22 +92,22 @@ class ComposePostHandler:
             ## can be extracted and found from the helper functions.
             ## 
             ## TODO: Is my understanding correct here?
-            writer_text_map = {}
+            serialized_span_context = {}
             tracer.inject(
                 span_context=span.context,
                 format=Format.TEXT_MAP,
-                carrier=writer_text_map
+                carrier=serialized_span_context
             )
 
             ## Setup the async futures executor
             ## TODO: Read that from some config file
             max_workers = 2
-            with ThreadPoolExecutor(max_workers=2) as executor:
+            with ThreadPoolExecutor(max_workers=max_workers) as executor:
                 ## Call the ComposeTextHelper
                 text_client_fn = self.text_service_client.ComposeText
                 text_result_future = executor.submit(self.MakeRequestHelper,
                                                      'compose_text_client',
-                                                     writer_text_map,
+                                                     serialized_span_context,
                                                      text_client_fn,
                                                      req_id, text)
 
@@ -110,18 +115,42 @@ class ComposePostHandler:
                 user_client_fn = self.user_service_client.ComposeCreatorWithUserId
                 creator_future = executor.submit(self.MakeRequestHelper,
                                                  'compose_creator_client',
-                                                 writer_text_map,
+                                                 serialized_span_context,
                                                  user_client_fn,
                                                  req_id, user_id, username)
 
-                text = text_result_future.result()
+                ## Call the media service                
+                media_client_fn = self.media_service_client.ComposeMedia
+                media_future = executor.submit(self.MakeRequestHelper,
+                                               'compose_media_client',
+                                               serialized_span_context,
+                                               media_client_fn,
+                                               req_id, media_types, media_ids)
+
+                ## Call the UniqueId service
+                unique_id_client_fn = self.unique_id_service_client.ComposeUniqueId
+                unique_id_future = executor.submit(self.MakeRequestHelper,
+                                                   'compose_unique_id_client',
+                                                   serialized_span_context,
+                                                   unique_id_client_fn,
+                                                   req_id, post_type)
+
+                text_return = text_result_future.result()
                 ## Old invocation without futures
-                # text = self._ComposeTextHelper(req_id, text, writer_text_map)
-                # log("Text returned:", text)
+                # text_return = self._ComposeTextHelper(req_id, text, serialized_span_context)
+                # log("Text returned:", text_return)
 
                 creator = creator_future.result()
                 # log("Creator returned:", creator)
 
+                media = media_future.result()
+                # log("Media returned:", media)
+
+                unique_id = unique_id_future.result()
+                # log("Unique ID returned:", unique_id)
+
+                ## TODO: How do we handle the timestamp nondeterminism
+                timestamp = int(round(time.time() * 1000))
 
         return
 
@@ -155,6 +184,8 @@ class ComposePostHandler:
 
         return return_value
 
+
+## TODO: Remove the extra injects and extracts.
 
 ## TODO: Before making the tracer work we can do with logging, no problem.
 
@@ -190,13 +221,15 @@ if __name__ == '__main__':
 
     ## Set up clients
     ## TODO: Get address and port from config file
-    # text_service_client = TextServiceClient()
-    # user_service_client = UserServiceClient()
     text_service_client = SetupClient(TextService, "text-service", 9090)
     user_service_client = SetupClient(UserService, "user-service", 9090) 
+    media_service_client = SetupClient(MediaService, "media-service", 9090) 
+    unique_id_service_client = SetupClient(UniqueIdService, "unique-id-service", 9090) 
 
     handler = ComposePostHandler(text_service_client,
-                                 user_service_client)
+                                 user_service_client,
+                                 media_service_client,
+                                 unique_id_service_client)
     processor = ComposePostService.Processor(handler)
     transport = TSocket.TServerSocket(host='0.0.0.0', port=service_port)
     tfactory = TTransport.TFramedTransportFactory()
