@@ -89,6 +89,8 @@ services:
     volumes:
       - ./config:/social-network-microservices/config
       - ./keys:/keys
+    # environment:
+    #   host.docker.internal
 
   post-storage-service:
     image: yg397/social-network-microservices:latest

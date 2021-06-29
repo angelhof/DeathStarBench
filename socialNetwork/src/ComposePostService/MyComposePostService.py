@@ -7,12 +7,12 @@ sys.path.append('gen-py')
 from concurrent.futures import ThreadPoolExecutor
 import time
 
-from social_network import ComposePostService, MediaService, TextService, UniqueIdService, UserService
+from social_network import ComposePostService, MediaService, TextService, UniqueIdService, UserService, ttypes
 # from ComposePostService import *
 
-from thrift.transport import TSocket
+from thrift.transport import TSocket, THttpClient
 from thrift.transport import TTransport
-from thrift.protocol import TBinaryProtocol
+from thrift.protocol import TBinaryProtocol, TJSONProtocol
 from thrift.server import TServer
 
 ## For Jaeger
@@ -22,6 +22,17 @@ from opentracing.propagation import Format
 
 def log(*args, **kwargs):
     print(*args, file=sys.stderr, **kwargs)
+
+def try_n_times(fn, attempts):
+    for i in range(attempts):
+        try:
+            log("Attempt: i...", end='')
+            ret = fn()
+            log("SUCCESS")
+            return ret
+        except:
+            log("FAIL")
+            time.sleep(1)
 
 def set_up_tracer(config_file_path, service):
     ## TODO: Properly read YAML config
@@ -149,8 +160,20 @@ class ComposePostHandler:
                 unique_id = unique_id_future.result()
                 # log("Unique ID returned:", unique_id)
 
-                ## TODO: How do we handle the timestamp nondeterminism
+                ## TODO: How do we handle the timestamp nondeterminism 
                 timestamp = int(round(time.time() * 1000))
+
+                ## Create the post
+                post = ttypes.Post(post_id=unique_id, 
+                                   creator=creator, 
+                                   req_id=req_id, 
+                                   text=text_return.text, 
+                                   user_mentions=text_return.user_mentions, 
+                                   media=media, 
+                                   urls=text_return.urls, 
+                                   timestamp=timestamp, 
+                                   post_type=post_type)
+                log("Post:", post)
 
         return
 
@@ -205,6 +228,23 @@ def SetupClient(service_client_class, service_addr, service_port):
     ## Connect to the client
     ## TODO: Understand what this does
     ## TODO: Where do we need to catch errors?
+    try_n_times(transport.open, 10)
+    # transport.open()
+
+    return client
+
+def SetupHttpClient(service_client_class, service_url):
+    ## An HTTP Client is necessary to interact with FaaS
+    transport = THttpClient.THttpClient(service_url)
+
+    ## TODO: Transport probably doesn't really matter
+    transport = TTransport.TBufferedTransport(transport)
+
+    ## The protocol also probably doesn't matter, but it is good to start with JSON for better observability.
+    protocol = TJSONProtocol.TJSONProtocol(transport)
+    client = service_client_class.Client(protocol)
+
+    # TODO: Unclear if this is necessary. 
     transport.open()
 
     return client
@@ -220,11 +260,17 @@ if __name__ == '__main__':
     service_port = 9090
 
     ## Set up clients
+    time.sleep(5)
     ## TODO: Get address and port from config file
-    text_service_client = SetupClient(TextService, "text-service", 9090)
     user_service_client = SetupClient(UserService, "user-service", 9090) 
     media_service_client = SetupClient(MediaService, "media-service", 9090) 
-    unique_id_service_client = SetupClient(UniqueIdService, "unique-id-service", 9090) 
+    unique_id_service_client = SetupClient(UniqueIdService, "unique-id-service", 9090)
+    # text_service_client = SetupClient(TextService, "text-service", 9090)
+
+    ## Alternative for FaaS
+    ## TODO: Get that from some documentation
+    text_service_client = SetupHttpClient(TextService, "http://host.docker.internal:8090/function/compose-post")
+     
 
     handler = ComposePostHandler(text_service_client,
                                  user_service_client,
