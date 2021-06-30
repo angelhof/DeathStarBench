@@ -183,8 +183,9 @@ services:
   url-shorten-service:
     image: yg397/social-network-microservices:latest
     hostname: url-shorten-service
-    #    ports:
-    #      - 10004:9090
+    ## TODO: Take this from some configuration this is ad-hoc...
+    ports:
+      - 10004:9090
     restart: always
     entrypoint: UrlShortenService
     depends_on:
@@ -341,8 +342,8 @@ services:
   user-mention-service:
     image: yg397/social-network-microservices:latest
     hostname: user-mention-service
-    #    ports:
-    #      - 10009:9090
+    ports:
+      - 10009:9090
     depends_on:
       config:
         condition: service_completed_successfully
