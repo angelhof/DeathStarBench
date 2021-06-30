@@ -6,6 +6,8 @@ sys.path.append('gen-py')
 
 from concurrent.futures import ThreadPoolExecutor
 import time
+import traceback
+import inspect
 
 from social_network import ComposePostService, MediaService, TextService, UniqueIdService, UserService, ttypes
 # from ComposePostService import *
@@ -23,6 +25,7 @@ from opentracing.propagation import Format
 def log(*args, **kwargs):
     print(*args, file=sys.stderr, **kwargs)
 
+## TODO: Fix that to work properly...
 def try_n_times(fn, attempts):
     for i in range(attempts):
         try:
@@ -237,8 +240,8 @@ def SetupHttpClient(service_client_class, service_url):
     ## An HTTP Client is necessary to interact with FaaS
     transport = THttpClient.THttpClient(service_url)
 
-    ## TODO: Transport probably doesn't really matter
-    transport = TTransport.TBufferedTransport(transport)
+    ## TODO: This leads to a bug, probably because it is not mirrored on the serverless side (I am not even sure it can be).
+    # transport = TTransport.TBufferedTransport(transport)
 
     ## The protocol also probably doesn't matter, but it is good to start with JSON for better observability.
     protocol = TJSONProtocol.TJSONProtocol(transport)
